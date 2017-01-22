@@ -45,7 +45,11 @@ if ('rid' in $_GET) {
   rid = null;
 }
 // Connect to PeerJS, have server assign an ID instead of providing one
-var peer = new Peer(pid, {host: 'localhost', port: 9000, path: '/'});
+ var peer = new Peer(pid, {
+   host: window.location.hostname,
+   port: 9000,//window.location.port,
+   path: '/'
+ });
 var connectedPeers = {};
 
 // Show this peer's ID.
@@ -62,13 +66,13 @@ peer.on('error', function(err) {
 
 // Handle a connection object.
 function connect(c) {
-  var borderColor = 'orange';
+  var borderColor = '#FF7722';
   if (typeof origBorderColor === "undefined") {
     origBorderColor = $('#box').css('border-color');
   }
   if (rid === null) {
     //initiator
-    borderColor = 'blue';
+    borderColor = 'rgb(122,190,238)';
   }
   $('#box').css('border-color', borderColor);
   // Handle a chat connection.
