@@ -8,5 +8,9 @@ a {
 }
 
 input#rndId {
-    width: 37ex;
+  width: 37ex;
+}
+
+#inspireBox {
+  margin-top:20px;
 }

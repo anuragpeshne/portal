@@ -96,7 +96,7 @@ function connect(c) {
       }
     });
     c.on('close', function() {
-      toastr.error(c.peer + ' has left the chat.');
+      toastr.error(c.peer + ' has closed the connection.');
       $('#box').css('border-color', origBorderColor);
       delete connectedPeers[c.peer];
     });

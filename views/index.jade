@@ -3,7 +3,18 @@ extends layout
 block content
   h1= title
   p Welcome to #{title}
+  ol
+    li Create Portal Link
+    li Share with the
+      span(style="font-style: italic;") &nbsp;other&nbsp;
+      | computer
+    li Wait for connection, the portal will turn
+      span(style="color:rgb(122, 190, 238)") &nbsp;blue/
+      span(style="color:rgb(255, 119, 34)") orange
+    li Drop files on the portal
   form(name="add-estimation", method="post", action="./")
         div.input
             input(type="text", name="peerId", value="#{rndId}", id="rndId")
             input(type="submit", value="Create", class="btn btn-default")
+  div#inspireBox
+    img(src="http://imgs.xkcd.com/comics/file_transfer.png")
