@@ -1,0 +1,239 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Portal</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Language" content="en-us">
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link href="stylesheets/basic.css" rel="stylesheet" type="text/css">
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+<script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+<script src="javascripts/StreamSaver.js"></script> <!-- load before streams polyfill to detect support -->
+<script src="https://cdn.rawgit.com/creatorrr/web-streams-polyfill/master/dist/polyfill.min.js"></script>
+<script>
+ incomingFiles = {};
+ outgoingFiles = {};
+// get GET
+var $_GET = {};
+if(document.location.toString().indexOf('?') !== -1) {
+  var query = document.location
+    .toString()
+    // get the query string
+    .replace(/^.*?\?/, '')
+    // and remove any existing hash string (thanks, @vrijdenker)
+    .replace(/#.*$/, '')
+    .split('&');
+
+  for(var i=0, l=query.length; i<l; i++) {
+    var aux = decodeURIComponent(query[i]).split('=');
+    $_GET[aux[0]] = aux[1];
+  }
+}
+
+// pid: personal id, rid: requested peer id
+if ('pid' in $_GET) {
+  pid = $_GET['pid'];
+} else {
+  alert("fatal: no id, redirect to index");
+//  window.location = "./";
+}
+if ('rid' in $_GET) {
+  rid = $_GET['rid'];
+} else {
+  rid = null;
+}
+// Connect to PeerJS, have server assign an ID instead of providing one
+var peer = new Peer(pid, {host: 'localhost', port: 9000, path: '/'});
+var connectedPeers = {};
+
+// Show this peer's ID.
+peer.on('open', function(id){
+  $('#pid').text(id);
+});
+
+// Await connections from others
+peer.on('connection', connect);
+
+peer.on('error', function(err) {
+  console.log(err);
+})
+
+// Handle a connection object.
+function connect(c) {
+  var borderColor = 'orange';
+  if (typeof origBorderColor === "undefined") {
+    origBorderColor = $('#box').css('border-color');
+  }
+  if (rid === null) {
+    //initiator
+    borderColor = 'blue';
+  }
+  $('#box').css('border-color', borderColor);
+  // Handle a chat connection.
+  if (c.label === 'chat') {
+
+    c.on('data', function(data) {
+      reqInfo = JSON.parse(data);
+      if (reqInfo['type'] == 'intimation') {
+        incomingFiles[reqInfo['fileSize']] = reqInfo['fileName'];
+        sendMsg(JSON.stringify({
+            'fileName': reqInfo['fileName'],
+            'fileSize': reqInfo['fileSize'],
+            'type': 'ack'
+        }));
+      } else if(reqInfo['type'] == 'ack') {
+        sendFile(outgoingFiles[reqInfo['fileName']]);
+        console.log("file " + reqInfo['fileName'] + "sent!");
+        delete outgoingFiles[reqInfo['fileName']];
+      }
+    });
+    c.on('close', function() {
+      alert(c.peer + ' has left the chat.');
+      $('#box').css('border-color', origBorderColor);
+      delete connectedPeers[c.peer];
+    });
+  } else if (c.label === 'file') {
+    c.on('data', function(data) {
+      console.log("got file");
+      // If we're getting a file, create a URL for it.
+      if (data.constructor === ArrayBuffer) {
+        var dataView = new Uint8Array(data);
+        var fileName = incomingFiles[dataView.length];
+        delete incomingFiles[dataView.length];
+
+        //check if file stream is suported
+        const { createWriteStream, supported, version } = window.streamSaver
+        if (supported) {
+          const fileStream = streamSaver.createWriteStream(
+            fileName,
+            dataView.length
+          );
+          const writer = fileStream.getWriter();
+          writer.write(dataView);
+          writer.close();
+        } else {
+          var dataBlob = new Blob([dataView]);
+          var url = window.URL.createObjectURL(dataBlob);
+          window.location = url
+        }
+      }
+    });
+  }
+  connectedPeers[c.peer] = 1;
+}
+
+function sendMsg(msg) {
+  eachActiveConnection(function(c, $c) {
+    if (c.label === 'chat') {
+      c.send(msg);
+    }
+  });
+}
+
+function sendFile(file) {
+  eachActiveConnection(function(c, $c) {
+    if (c.label === 'file') {
+      c.send(file);
+    }
+  });
+}
+// Goes through each active peer and calls FN on its connections.
+function eachActiveConnection(fn) {
+  var peerId = rid;
+  for (var id in peer.connections) {
+    var conns = peer.connections[id];
+    for (var i = 0, ii = conns.length; i < ii; i += 1) {
+      var conn = conns[i];
+      fn(conn, $(this));
+    }
+  }
+}
+
+$(document).ready(function() {
+  //popluate share link
+  if ('shareId' in $_GET) {
+    shareId = $_GET['shareId'];
+    $('#shareLink').text(window.location.href.substring(0, window.location.href.indexOf('?')) + '?pid=' + shareId + '&rid=' + pid);
+  }
+
+  // Prepare file drop box.
+  var box = $('#box');
+  box.on('dragenter', doNothing);
+  box.on('dragover', doNothing);
+  box.on('drop', function(e){
+    e.originalEvent.preventDefault();
+    var file = e.originalEvent.dataTransfer.files[0];
+    eachActiveConnection(function(c, $c) {
+      if (c.label === 'file') {
+        sendMsg(JSON.stringify({
+            'fileName': file.name,
+            'fileSize': file.size,
+            'type': 'intimation'
+        }));
+        outgoingFiles[file.name] = file;
+      }
+    });
+  });
+  function doNothing(e){
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // Connect to a peer
+  if (rid !== null) {
+    connectToPeer(rid);
+  }
+  function connectToPeer(requestedPeer) {
+    if (!connectedPeers[requestedPeer]) {
+      // Create 2 connections, one labelled chat and another labelled file.
+      var c = peer.connect(requestedPeer, {
+        label: 'chat',
+        serialization: 'none',
+        metadata: {message: 'transfer info'}
+      });
+      c.on('open', function() {
+        connect(c);
+      });
+      c.on('error', function(err) { alert(err); });
+      var f = peer.connect(requestedPeer, { label: 'file', reliable: true });
+      f.on('open', function() {
+        connect(f);
+      });
+      f.on('error', function(err) { alert(err); });
+    }
+    connectedPeers[requestedPeer] = 1;
+  };
+
+  // Close a connection.
+  $('#close').click(function() {
+    eachActiveConnection(function(c) {
+      c.close();
+    });
+  });
+
+});
+
+// Make sure things clean up properly.
+
+window.onunload = window.onbeforeunload = function(e) {
+  if (!!peer && !peer.destroyed) {
+    peer.destroy();
+  }
+};
+
+</script>
+</head>
+
+<body>
+  <h1>Portal</h1>
+  <div id="actions">
+    Your PeerJS ID is <span id="pid"></span><br>
+
+  <div id="box" > </div>
+  <blockquote id="shareLink"></blockquote>
+
+
+</body>
+</html>

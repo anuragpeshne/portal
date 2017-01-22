@@ -1,0 +1,14 @@
+#box {
+  background: #fff;
+  font-size: 18px;
+  height:400px;
+  width: 268px;
+  margin: 0 auto;
+  text-align: center;
+  border: 4px solid gray;
+  border-radius: 200px;
+}
+
+body {
+  padding: 50px;
+}

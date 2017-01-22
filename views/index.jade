@@ -1,0 +1,9 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+  form(name="add-estimation", method="post", action="./")
+        div.input
+            input(type="text", name="peerId", value="#{rndId}", id="rndId")
+            input(type="submit", value="Create", class="btn btn-default")
