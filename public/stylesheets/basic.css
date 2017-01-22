@@ -9,6 +9,11 @@
   border-radius: 200px;
 }
 
+#box p {
+  color: #aaa;
+  padding-top: 150px;
+}
+
 body {
   padding: 50px;
 }

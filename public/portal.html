@@ -7,11 +7,13 @@
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <link href="stylesheets/basic.css" rel="stylesheet" type="text/css">
+<link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet"/>
 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
 <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
 <script src="javascripts/StreamSaver.js"></script> <!-- load before streams polyfill to detect support -->
 <script src="https://cdn.rawgit.com/creatorrr/web-streams-polyfill/master/dist/polyfill.min.js"></script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
 <script>
  incomingFiles = {};
  outgoingFiles = {};
@@ -94,7 +96,7 @@ function connect(c) {
       }
     });
     c.on('close', function() {
-      alert(c.peer + ' has left the chat.');
+      toastr.error(c.peer + ' has left the chat.');
       $('#box').css('border-color', origBorderColor);
       delete connectedPeers[c.peer];
     });
@@ -117,6 +119,7 @@ function connect(c) {
           const writer = fileStream.getWriter();
           writer.write(dataView);
           writer.close();
+          toastr.success("File saved!");
         } else {
           var dataBlob = new Blob([dataView]);
           var url = window.URL.createObjectURL(dataBlob);
@@ -140,6 +143,7 @@ function sendFile(file) {
   eachActiveConnection(function(c, $c) {
     if (c.label === 'file') {
       c.send(file);
+      toastr.success('File send done')
     }
   });
 }
@@ -235,7 +239,7 @@ window.onunload = window.onbeforeunload = function(e) {
   <div id="actions">
     Your ID is <span id="pid"></span><br>
 
-  <div id="box" > </div>
+  <div id="box" ><p>Drop Here to (tele)port</p></div>
   <blockquote id="shareLinkContainer">Share Link:<br/><input id="shareLink" readonly="readonly"/></blockquote>
 
 
