@@ -12,3 +12,8 @@
 body {
   padding: 50px;
 }
+
+#shareLink {
+  font-size: 12px;
+  width: 45ex;
+}
