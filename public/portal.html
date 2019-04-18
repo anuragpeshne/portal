@@ -10,7 +10,7 @@
 <link href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" rel="stylesheet"/>
 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
-<script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+<script src="javascripts/peerjs.min.js"></script>
 <script src="javascripts/StreamSaver.js"></script> <!-- load before streams polyfill to detect support -->
 <script src="https://cdn.rawgit.com/creatorrr/web-streams-polyfill/master/dist/polyfill.min.js"></script>
 <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
@@ -50,7 +50,7 @@ if ('rid' in $_GET) {
  var peer = new Peer(pid, {
    host: window.location.hostname,
    port: 9000,//window.location.port,
-   path: '/'
+   path: '/peerjs'
  });
 var connectedPeers = {};
 
