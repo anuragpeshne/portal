@@ -1,18 +1,12 @@
 version: '3'
 services:
   nginx:
-    image: jwilder/nginx-proxy
+    build: ./nginx
     ports:
       - '80:80'
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - '9000:9000'
 
   nodejs:
     build: .
     restart: always
-    environment:
-      VIRTUAL_HOST: portal.local
     container_name: nodejs
-    ports:
-      - "3000:3000"
-      - "9000:9000"
