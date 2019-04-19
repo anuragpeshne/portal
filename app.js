@@ -27,7 +27,7 @@ app.use('/', routes);
 app.use('/users', users);
 
 // PeerJS setup
-const server = app.listen(9000, '127.0.0.1');
+const server = app.listen(9000);
 const peerserver = ExpressPeerServer(server, { debug: true });
 app.use('/peerjs', peerserver);
 
